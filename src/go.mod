@@ -1,4 +1,4 @@
-module hello
+module github-md-crm
 
 go 1.19
 
