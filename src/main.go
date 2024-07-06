@@ -1,51 +1,52 @@
 package main
 
 import (
-	"errors"
-	"fmt"
-	"io/ioutil"
-	"net/http"
-
+	"context"
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
+	fiberadapter "github.com/awslabs/aws-lambda-go-api-proxy/fiber"
+	"github.com/gofiber/fiber/v2"
+	"os"
 )
 
-var (
-	// DefaultHTTPGetAddress Default Address
-	DefaultHTTPGetAddress = "https://checkip.amazonaws.com"
+var fiberLambda *fiberadapter.FiberLambda
 
-	// ErrNoIP No IP found in response
-	ErrNoIP = errors.New("No IP in HTTP response")
+type StatusStruct struct {
+	Status  string  `json:"status"`
+	Data    string  `json:"data"`
+	Version float64 `json:"v"`
+}
 
-	// ErrNon200Response non 200 status code in response
-	ErrNon200Response = errors.New("Non 200 Response found")
-)
+func status(c *fiber.Ctx) error {
+	err := c.Status(200).JSON(StatusStruct{
+		"ok",
+		"API is running",
+		0.1,
+	})
+	return err
+}
 
-func handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
-	resp, err := http.Get(DefaultHTTPGetAddress)
-	if err != nil {
-		return events.APIGatewayProxyResponse{}, err
+func IsLambda() bool {
+	if lambdaTaskRoot := os.Getenv("LAMBDA_TASK_ROOT"); lambdaTaskRoot != "" {
+		return true
 	}
-
-	if resp.StatusCode != 200 {
-		return events.APIGatewayProxyResponse{}, ErrNon200Response
-	}
-
-	ip, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return events.APIGatewayProxyResponse{}, err
-	}
-
-	if len(ip) == 0 {
-		return events.APIGatewayProxyResponse{}, ErrNoIP
-	}
-
-	return events.APIGatewayProxyResponse{
-		Body:       fmt.Sprintf("Hello, %v", string(ip)),
-		StatusCode: 200,
-	}, nil
+	return false
 }
 
 func main() {
-	lambda.Start(handler)
+	app := fiber.New()
+
+	app.Get("/", status)
+	app.Get("/users", status)
+
+	if IsLambda() {
+		fiberLambda = fiberadapter.New(app)
+		lambda.Start(Handler)
+	} else {
+		app.Listen(":3000")
+	}
+}
+
+func Handler(ctx context.Context, request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+	return fiberLambda.ProxyWithContext(ctx, request)
 }
