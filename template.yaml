@@ -2,7 +2,7 @@ AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
 
 Resources:
-  HelloWorldFunction:
+  BackFunc:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: src/
@@ -10,6 +10,11 @@ Resources:
       Runtime: provided.al2
       Tracing: Active
       Events:
+        GetEvent:
+          Type: Api
+          Properties:
+            Path: /{all+}
+            Method: GET
         CatchAll:
           Type: Api
           Properties:
