@@ -11,10 +11,9 @@ type StatusStruct struct {
 }
 
 func StatusHandler(c *fiber.Ctx) error {
-	err := c.Status(200).JSON(StatusStruct{
+	return c.Status(200).JSON(StatusStruct{
 		"ok",
 		"API is running",
 		0.1,
 	})
-	return err
 }

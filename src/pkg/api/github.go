@@ -2,11 +2,14 @@ package api
 
 import (
 	"bytes"
+	"context"
 	"crypto/rand"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"github.com/gofiber/fiber/v2"
+	"github.com/google/go-github/v62/github"
+	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -19,9 +22,13 @@ type Github struct {
 	GithubSecret   string
 }
 
-type TknStruct struct {
-	tkn         string `cookie:"tkn"`
-	githubState string `cookie:"github_state"`
+type GitHubMeStrict struct {
+	Login string `json:"login"`
+	Id    uint   `json:"id"`
+}
+
+type GithubRepo struct {
+	Name string `json:"name"`
 }
 
 func GetGithubEnv() Github {
@@ -53,17 +60,9 @@ func GithubRedirect(c *fiber.Ctx) error {
 
 func GithubCallback(c *fiber.Ctx) error {
 	code := c.Query("code")
-	fmt.Println(c.Query("code"))
-	fmt.Println(c.Query("state"))
 	if c.Query("state") != c.Cookies("github_state") {
 		return c.Status(400).SendString("error - bad state")
 	}
-
-	t := TknStruct{}
-	if err := c.CookieParser(&t); err != nil {
-		return err
-	}
-	fmt.Println(t)
 
 	tkn := getGithubAccessToken(code)
 	if tkn == "" {
@@ -73,6 +72,56 @@ func GithubCallback(c *fiber.Ctx) error {
 		Name:  "tkn",
 		Value: tkn,
 	})
+	return c.Redirect("/rep", http.StatusTemporaryRedirect)
+	//return c.Status(200).SendString("success")
+}
+
+func GithubMyRepos(c *fiber.Ctx) error {
+	tkn := c.Cookies("tkn")
+	data := getGithubData(tkn)
+	client := github.NewClient(nil).WithAuthToken(tkn)
+	opts := github.RepositoryListByUserOptions{Sort: "created", Type: "owner"}
+	list, _, err := client.Repositories.ListByUser(context.Background(), data.Login, &opts)
+	if err != nil {
+		return c.Status(200).SendString(fmt.Sprintf("error, %e", err))
+	}
+
+	r := []GithubRepo{}
+	for _, l := range list {
+		r = append(r, GithubRepo{*l.Name})
+	}
+	return c.Status(200).JSON(r)
+}
+
+func GithubSendFile(c *fiber.Ctx) error {
+	tkn := c.Cookies("tkn")
+	repo := c.Cookies("repo")
+	fileRaw, err := c.FormFile("file")
+	file, _ := fileRaw.Open()
+	defer file.Close()
+	if err != nil {
+		return c.Status(400).SendString(fmt.Sprintf("error, %e", err))
+	}
+	data := getGithubData(tkn)
+	client := github.NewClient(nil).WithAuthToken(tkn)
+
+	buf := bytes.NewBuffer(nil)
+	if _, err := io.Copy(buf, file); err != nil {
+		return c.Status(400).SendString(fmt.Sprintf("error, %e", err))
+	}
+
+	// Note: the file needs to be absent from the repository as you are not
+	// specifying a SHA reference here.
+	opts := &github.RepositoryContentFileOptions{
+		Message:   github.String("This is my commit message"),
+		Content:   buf.Bytes(),
+		Branch:    github.String("master"),
+		Committer: &github.CommitAuthor{Name: github.String("FirstName LastName"), Email: github.String("user@example.com")},
+	}
+	_, _, err = client.Repositories.CreateFile(context.Background(), data.Login, repo, fileRaw.Filename, opts)
+	if err != nil {
+		return c.Status(400).SendString(fmt.Sprintf("error, %e", err))
+	}
 	return c.Status(200).SendString("success")
 }
 
@@ -124,7 +173,7 @@ func getGithubAccessToken(code string) string {
 	return ghresp.AccessToken
 }
 
-func getGithubData(accessToken string) string {
+func getGithubData(accessToken string) GitHubMeStrict {
 	// Get request to a set URL
 	req, reqerr := http.NewRequest(
 		"GET",
@@ -147,22 +196,9 @@ func getGithubData(accessToken string) string {
 
 	// Read the response as a byte slice
 	respbody, _ := ioutil.ReadAll(resp.Body)
+	res := GitHubMeStrict{}
+	json.Unmarshal(respbody, &res)
 
-	// Convert byte slice to string and return
-	return string(respbody)
+	//return string(respbody)
+	return res
 }
-
-/*
-Get user repos
-
-curl -L \
-  -H "Accept: application/vnd.github+json" \
-  -H "Authorization: Bearer <YOUR-TOKEN>" \
-  -H "X-GitHub-Api-Version: 2022-11-28" \
-  https://api.github.com/users/USERNAME/repos
-
-
-Get repo files
-
-Post repo changes
-*/

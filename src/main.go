@@ -21,6 +21,8 @@ func main() {
 	app.Get("/status", api.StatusHandler)
 	app.Get("/redirect", api.GithubRedirect)
 	app.Get("/callback", api.GithubCallback)
+	app.Get("/rep", api.GithubMyRepos)
+	app.Get("/upl", api.GithubSendFile)
 
 	if IsLambda() {
 		fiberLambda = fiberadapter.New(app)
