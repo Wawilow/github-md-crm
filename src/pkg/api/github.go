@@ -27,10 +27,6 @@ type GitHubMeStrict struct {
 	Id    uint   `json:"id"`
 }
 
-type GithubRepo struct {
-	Name string `json:"name"`
-}
-
 func GetGithubEnv() Github {
 	return Github{
 		os.Getenv("GITHUB_APP_ID"),
@@ -52,7 +48,7 @@ func GithubRedirect(c *fiber.Ctx) error {
 	d := GetGithubEnv()
 	link := fmt.Sprintf("https://github.com/login/oauth/authorize?client_id=%s&response_type=code&scope=repo&redirect_uri=%s&state=%s",
 		d.GithubClientID,
-		"http://localhost:3000/callback",
+		fmt.Sprintf("%s/callback", os.Getenv("DOMAIN_NAME")),
 		state,
 	)
 	return c.Redirect(link, http.StatusTemporaryRedirect)
@@ -72,8 +68,7 @@ func GithubCallback(c *fiber.Ctx) error {
 		Name:  "tkn",
 		Value: tkn,
 	})
-	return c.Redirect("/rep", http.StatusTemporaryRedirect)
-	//return c.Status(200).SendString("success")
+	return c.Redirect("/repos", http.StatusTemporaryRedirect)
 }
 
 func GithubMyRepos(c *fiber.Ctx) error {
@@ -86,9 +81,9 @@ func GithubMyRepos(c *fiber.Ctx) error {
 		return c.Status(200).SendString(fmt.Sprintf("error, %e", err))
 	}
 
-	r := []GithubRepo{}
+	r := []string{}
 	for _, l := range list {
-		r = append(r, GithubRepo{*l.Name})
+		r = append(r, *l.Name)
 	}
 	return c.Status(200).JSON(r)
 }
@@ -127,7 +122,6 @@ func GithubSendFile(c *fiber.Ctx) error {
 
 func getGithubAccessToken(code string) string {
 	d := GetGithubEnv()
-
 	// Set us the request body as JSON
 	requestBodyMap := map[string]string{
 		"client_id":     d.GithubClientID,
