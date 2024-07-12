@@ -20,7 +20,7 @@ upstream back {
 }
 
 upstream front {
-    server localhost:5174;
+    server localhost:5173;
 }
 
 server {
@@ -38,7 +38,7 @@ server {
     location /\w/new {
         proxy_pass http://front;
     }
-    location /status {
+    location /api/status {
         proxy_pass http://back;
         proxy_redirect     off;
         proxy_read_timeout 300s;
@@ -53,17 +53,11 @@ server {
         proxy_redirect     off;
         proxy_read_timeout 300s;
     }
-    location /rep {
-        proxy_pass http://back;
-        proxy_redirect     off;
-        proxy_read_timeout 300s;
-    }
-    location /upl {
+    location /api/ {
         proxy_pass http://back;
         proxy_redirect     off;
         proxy_read_timeout 300s;
     }
 }
-
 ```
 2) sudo systemctl restart nginx
