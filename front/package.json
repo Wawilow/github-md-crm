@@ -21,6 +21,7 @@
 	},
 	"type": "module",
 	"dependencies": {
+		"@yarbsemaj/adapter-lambda": "^1.2.2",
 		"carta-md": "^4.3.3",
 		"node-fetch": "^3.3.2"
 	}

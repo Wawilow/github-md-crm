@@ -1,27 +1,24 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
-
 Resources:
   BackFunc:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: src/
+      CodeUri: back/
       Handler: bootstrap 
       Runtime: provided.al2
       Tracing: Active
       Events:
-        GetEvent:
-          Type: Api
-          Properties:
-            Path: /{all+}
-            Method: GET
         CatchAll:
           Type: Api
           Properties:
-            Path: /
-            Method: GET
+            Path: /api/{all+}
+            Method: ANY
       Environment:
         Variables:
-          PARAM1: VALUE
+          DOMAIN_NAME: VALUE
+          GITHUB_APP_ID: VALUE
+          GITHUB_CLIENT_ID: VALUE
+          GITHUB_SECRET: VALUE
     Metadata:
       BuildMethod: makefile

@@ -1,30 +1,33 @@
 <script>
+    import { Carta, MarkdownEditor } from 'carta-md';
     export let data;
 
-    import { Carta, MarkdownEditor } from 'carta-md';
+
     // Component default theme
     import 'carta-md/default.css';
-
-    // const carta = new Carta();
-    // Remember to use a sanitizer to prevent XSS attacks
-    // sanitizer: mySanitizer
-
     const carta = new Carta({
         // Remember to use a sanitizer to prevent XSS attacks
         // sanitizer: mySanitizer
     });
+    let value = "";
 
-    function Read() {
-        console.log("huh")
-        console.log(carta.renderer.container.contentEditable.valueOf().)
-        carta.cartaListeners.forEach(s => {
-            console.log(s)
-        })
+    let url = '/api/upl';
+    async function Read() {
+        let formData = new FormData();
+        formData.append('file_name', "README.md");
+        formData.append('file', value);
+        formData.append('repo', data.rep);
+
+        const response = await fetch(url, {
+            method: 'POST',
+            body: formData,
+        });
+        console.log(response.status)
     }
 </script>
 
 <h1 class="my-h1">{data.rep}</h1>
-<MarkdownEditor {carta} />
+<MarkdownEditor {carta} bind:value />
 <button on:click={Read}>Read</button>
 
 <style>

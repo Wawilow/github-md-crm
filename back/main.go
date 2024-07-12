@@ -18,11 +18,11 @@ func Handler(ctx context.Context, request events.APIGatewayProxyRequest) (events
 func main() {
 	app := fiber.New()
 
-	app.Get("/status", api.StatusHandler)
+	app.Get("/api/status", api.StatusHandler)
 	app.Get("/redirect", api.GithubRedirect)
 	app.Get("/callback", api.GithubCallback)
-	app.Get("/rep", api.GithubMyRepos)
-	app.Get("/upl", api.GithubSendFile)
+	app.Get("/api/rep", api.GithubMyRepos)
+	app.Post("/api/upl", api.GithubSendFile)
 
 	if IsLambda() {
 		fiberLambda = fiberadapter.New(app)

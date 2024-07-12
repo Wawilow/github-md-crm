@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/go-github/v62/github"
-	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -20,6 +19,12 @@ type Github struct {
 	GithubAppID    string
 	GithubClientID string
 	GithubSecret   string
+}
+
+type UploadStruct struct {
+	Repo     string `json:"repo"`
+	File     string `json:"file"`
+	FileName string `json:"file_name"`
 }
 
 type GitHubMeStrict struct {
@@ -90,30 +95,23 @@ func GithubMyRepos(c *fiber.Ctx) error {
 
 func GithubSendFile(c *fiber.Ctx) error {
 	tkn := c.Cookies("tkn")
-	repo := c.Cookies("repo")
-	fileRaw, err := c.FormFile("file")
-	file, _ := fileRaw.Open()
-	defer file.Close()
-	if err != nil {
-		return c.Status(400).SendString(fmt.Sprintf("error, %e", err))
+	payload := UploadStruct{}
+	if err := c.BodyParser(&payload); err != nil {
+		fmt.Println(string(c.Body()), err)
+		return err
 	}
 	data := getGithubData(tkn)
 	client := github.NewClient(nil).WithAuthToken(tkn)
-
-	buf := bytes.NewBuffer(nil)
-	if _, err := io.Copy(buf, file); err != nil {
-		return c.Status(400).SendString(fmt.Sprintf("error, %e", err))
-	}
 
 	// Note: the file needs to be absent from the repository as you are not
 	// specifying a SHA reference here.
 	opts := &github.RepositoryContentFileOptions{
 		Message:   github.String("This is my commit message"),
-		Content:   buf.Bytes(),
+		Content:   []byte(payload.File),
 		Branch:    github.String("master"),
 		Committer: &github.CommitAuthor{Name: github.String("FirstName LastName"), Email: github.String("user@example.com")},
 	}
-	_, _, err = client.Repositories.CreateFile(context.Background(), data.Login, repo, fileRaw.Filename, opts)
+	_, _, err := client.Repositories.CreateFile(context.Background(), data.Login, payload.Repo, payload.FileName, opts)
 	if err != nil {
 		return c.Status(400).SendString(fmt.Sprintf("error, %e", err))
 	}

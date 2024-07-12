@@ -4,7 +4,7 @@
     import { onMount } from "svelte";
 
     let r = ["loading or bad github token, check logs"];
-    const url: string = 'http://localhost/rep';
+    const url: string = '/api/rep';
     async function getReps(): Promise<Array<any>> {
         try {
             const response = await fetch(url);
