@@ -2,17 +2,18 @@
 
 <script lang="ts">
     import { onMount } from "svelte";
+    export let data;
 
-    let r = ["loading or bad github token, check logs"];
-    const url: string = '/api/rep';
+    let r = ["loading..."];
+    const url: string = '/api/files?';
     async function getReps(): Promise<Array<any>> {
         try {
-            const response = await fetch(url);
+            const response = await fetch(url  + new URLSearchParams({repo: data.rep}).toString());
             const res = JSON.parse(await response.text()) as string[]
             res.forEach( s => {
                 r.push(s)
             })
-            r[0] = ""    // wtf why does the array update don't work, it's fucking insane, I've spent on this thing few hours
+            r[0] = ""
             console.log(r);
         } catch (error) {
             console.error('Error:', error);
@@ -23,16 +24,33 @@
     onMount(async () => {
         await getReps()
     })
+
+    async function handleSubmit(event: SubmitEvent) {
+      const form = event.target as HTMLFormElement;
+      const d = new FormData(form);
+      window.location.href = '/repos/' + data.rep + '/' + d.get("file") + '/';
+    }
 </script>
 
 <main>
     <h1>Choose your repository</h1>
+    <form on:submit|preventDefault={handleSubmit}>
+        <label>
+          <span>New file name</span>
+          <input name="file" />
+        </label>
+        <button type="submit">Create new file</button>
+    </form>
     <table>
     <tr><p>---------------------</p></tr>
-    {#each r as rep}
-        {#if rep !== ''}
+    {#each r as file}
+        {#if file !== ''}
             <tr>
-                <a href="/repos/{rep}/" class="button">{rep}</a>
+                {#if file === ""}
+                    <p class="button">{file}</p>
+                {:else}
+                    <a href="/repos/{data.rep}/{file}/" class="button">{file}</a>
+                {/if}
             </tr>
             <tr><p>---------------------</p></tr>
         {/if}

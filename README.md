@@ -38,6 +38,11 @@ server {
     location /\w/new {
         proxy_pass http://front;
     }
+    location /api/set {
+        proxy_pass http://back;
+        proxy_redirect     off;
+        proxy_read_timeout 300s;
+    }
     location /api/status {
         proxy_pass http://back;
         proxy_redirect     off;

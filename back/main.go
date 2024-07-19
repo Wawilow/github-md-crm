@@ -19,6 +19,9 @@ func main() {
 	app := fiber.New()
 
 	app.Get("/api/status", api.StatusHandler)
+	app.Get("/api/set", api.GithubSetToken)
+	app.Get("/api/files", api.GithubRepoFiles)
+	app.Get("/api/file", api.GithubRepoFile)
 	app.Get("/redirect", api.GithubRedirect)
 	app.Get("/callback", api.GithubCallback)
 	app.Get("/api/rep", api.GithubMyRepos)

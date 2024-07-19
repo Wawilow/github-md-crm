@@ -7,7 +7,7 @@
 <table>
     <tr><a href="/repos">already, go to repos</a></tr>
     <tr><p>---------------------</p></tr>
-    <tr><a href="/redirect">login</a></tr>
+    <tr><a href="/login">login</a></tr>
 </table>
 </main>
 
