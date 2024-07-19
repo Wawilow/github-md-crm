@@ -1,0 +1,21 @@
+version: '3'
+
+services:
+  front:
+    build: front/
+    restart: always
+    container_name: front
+    ports:
+      - ${FRONT_PORT}:3000
+    environment:
+      NODE_ENV: development
+
+  back:
+    build: back/
+    restart: always
+    container_name: back
+    env_file:
+      - ./.env.dev
+    ports:
+      - ${BACK_PORT}:3000
+    entrypoint: ./main
