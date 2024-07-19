@@ -3,7 +3,7 @@
 <script lang="ts">
     import { onMount } from "svelte";
 
-    let r = ["loading or bad github token, check logs"];
+    let r = ["loading..."];
     const url: string = '/api/rep';
     async function getReps(): Promise<Array<any>> {
         try {
@@ -32,7 +32,11 @@
     {#each r as rep}
         {#if rep !== ''}
             <tr>
-                <a href="/repos/{rep}/" class="button">{rep}</a>
+                {#if rep === "loading..."}
+                    <p class="button">{rep}</p>
+                {:else}
+                    <a href="/repos/{rep}/" class="button">{rep}</a>
+                {/if}
             </tr>
             <tr><p>---------------------</p></tr>
         {/if}

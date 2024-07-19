@@ -46,7 +46,7 @@
     {#each r as file}
         {#if file !== ''}
             <tr>
-                {#if file === ""}
+                {#if file === "loading..."}
                     <p class="button">{file}</p>
                 {:else}
                     <a href="/repos/{data.rep}/{file}/" class="button">{file}</a>
