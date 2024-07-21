@@ -7,7 +7,9 @@
 <table>
     <tr><a href="/repos">already, go to repos</a></tr>
     <tr><p>---------------------</p></tr>
-    <tr><a href="/login">login</a></tr>
+    <tr><a href="/redirect">oauth login</a></tr>
+    <tr><p>---------------------</p></tr>
+    <tr><a href="/login">manually set github token</a></tr>
 </table>
 </main>
 
